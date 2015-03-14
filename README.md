@@ -3,6 +3,13 @@ Svelto IoC container for Unity 3D
 
 Svelto IoC Container is the evolution of my first IoC container that I created as Proof of concept. Svelto IoC is extensively used in the project I am working on Robocraft (http://www.robocraftgame.com)
 
+Please read my blog post for more information: http://www.sebaslab.com/svelto-inversion-of-control-container/
+
+The ad hoc example can be found here: https://github.com/sebas77/Svelto-IoC-Example
+
+License
+=====================================
+
 Copyright (c) 2015 Sebastiano Mandalà
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
