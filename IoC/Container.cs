@@ -12,14 +12,14 @@ namespace Svelto.IoC
 	    /// </summary>
 	    private sealed class Binder<Contractor>: IBinder<Contractor> where Contractor:class
 	    {
-		    public void Bind(IInternalContainer container)
+		    public void Bind<ToBind>(IInternalContainer container) where ToBind:class
 		    {
 			    _container = container;
 
-                _interfaceType = typeof(Contractor);
+			    _interfaceType = typeof(ToBind);
 		    }
 
-            public void AsSingle<T>() where T:Contractor, new()
+		    public void AsSingle<T>() where T:Contractor, new()
 		    {
                 _container.Register<T, StandardProvider<T>>(_interfaceType, new StandardProvider<T>());
 		    }
@@ -49,19 +49,17 @@ namespace Svelto.IoC
 		// IContainer interface
 		//
 		
-		virtual public IBinder<TContractor> Bind<TContractor>() where TContractor:class
-		{
-            Binder<TContractor> binder = new Binder<TContractor>();
+		public IBinder<TContractor> Bind<TContractor>() where TContractor:class
+        {
+            IBinder<TContractor> binder = InternalBind<TContractor>();
 
-            binder.Bind(this);
-			
-			return binder;
-		}
+            return binder;
+        }
 
-        public void BindSelf<TContractor>() where TContractor : class, new()
+        public void BindSelf<TContractor>() where TContractor:class, new()
 		{
-            IBinder<TContractor> binder = Bind<TContractor>();
-            
+            IBinder<TContractor> binder = InternalBind<TContractor>();
+
             binder.AsSingle<TContractor>();
 		}
 		
@@ -70,13 +68,13 @@ namespace Svelto.IoC
 			Type contract = typeof(TContractor);
 
 			TContractor instance = Get(contract) as TContractor;
-			
+
 			DesignByContract.Check.Ensure(instance != null, "IoC.Container instance failed to be built (contractor not found - must be registered)");
 			
 			return instance;
 		}
-		
-		public void Release<TContractor>() where TContractor:class
+
+        public void Release<TContractor>() where TContractor:class
 		{
 			Type type = typeof(TContractor);
 				
@@ -127,10 +125,40 @@ namespace Svelto.IoC
 			return null;
 		}
 
+        /// <summary>
+        /// Users can define their own IBinder and override this function to use it
+        /// </summary>
+        /// <typeparam name="TContractor"></typeparam>
+        /// <returns></returns>
+
+        virtual protected IBinder<TContractor> BinderProvider<TContractor>() where TContractor:class
+		{
+			return new Binder<TContractor>();
+		}
+
+        /// <summary>
+        /// Called when an instance is first built. Useful to add new Container behaviours,
+        /// but not needed for the final user since OnDependenciesInjected must be used instead.
+        /// </summary>
+        /// <typeparam name="TContractor"></typeparam>
+        /// <param name="instance"></param>
+
+        virtual protected void OnInstanceGenerated<TContractor>(TContractor instance) where TContractor : class
+        {}
+
         //
-		// Private Members
-		//
-		
+        // Private Members
+        //
+
+        IBinder<TContractor> InternalBind<TContractor>() where TContractor : class
+        {
+            IBinder<TContractor> binder = BinderProvider<TContractor>();
+
+            binder.Bind<TContractor>(this);
+
+            return binder;
+        }
+
         object Get(Type contract, Type containerContract) 
 		{
             IProvider provider = null;
@@ -160,8 +188,10 @@ namespace Svelto.IoC
 			    _uniqueInstances[provider.contract] = obj; //seriously, this must be done before obj is injected to avoid circular dependencies
 			
 			InternalInject(obj);
-			
-			return obj;
+
+            OnInstanceGenerated(obj);
+
+            return obj;
 		}
 
         void InternalInject(object injectable)
@@ -185,9 +215,34 @@ namespace Svelto.IoC
             for (int i = 0; i < properties.Length; i++)
                 InjectProperty(injectable, properties[i] as PropertyInfo, contract);
 
-            //transform in [tag] instead to use an interface
-            if (injectable is IInitialize)
-                (injectable as IInitialize).OnDependenciesInjected();
+            try
+            {
+                //transform in [tag] instead to use an interface
+                if (injectable is IInitialize)
+                    (injectable as IInitialize).OnDependenciesInjected();
+            }
+            catch (Exception e)
+            {
+                throw new Exception("OnDependenciesInjected Crash", e);
+            }
+        }
+        private void CallInjection(object injectable, MethodInfo info, Type contract)
+        {
+            ParameterInfo[] parameters = info.GetParameters();
+            object[] parameterBuffer = new object[parameters.Length];
+
+            for (int i = parameters.Length - 1; i >= 0; --i)
+            {
+                ParameterInfo parameter = parameters[i];
+
+                object valueObj = Get(parameter.ParameterType, contract);
+
+                //inject in Injectable the valueObj
+                if (valueObj != null)
+                    parameterBuffer[i] = valueObj;
+            }
+
+            info.Invoke(injectable, parameterBuffer);
         }
 
         static bool DelegateToSearchCriteria(MemberInfo objMemberInfo, Object objSearch)

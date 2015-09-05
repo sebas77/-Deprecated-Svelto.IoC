@@ -1,4 +1,7 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace Svelto.Ticker
@@ -15,14 +18,14 @@ namespace Svelto.Ticker
 			_ticked.Remove(tickable);
 		}
 
-		internal void AddPhysical(IPhysicallyTickable tickable)
+		internal void AddPhysic(IPhysicallyTickable tickable)
 		{
-			_physicallyticked.Add(tickable);
+			_physicallyTicked.Add(tickable);
 		}
 
-		internal void RemovePhysical(IPhysicallyTickable tickable)
+		internal void RemovePhysic(IPhysicallyTickable tickable)
 		{
-			_physicallyticked.Remove(tickable);
+			_physicallyTicked.Remove(tickable);
 		}
 
 		internal void AddLate(ILateTickable tickable)
@@ -35,24 +38,52 @@ namespace Svelto.Ticker
 			_lateTicked.Remove(tickable);
 		}
 
-		void Update()
+        internal void AddIntervaled(IIntervaledTickable tickable)
+        {
+            var methodInfo = ((Action)tickable.IntervaledTick).Method;
+            object[] attrs = methodInfo.GetCustomAttributes(typeof(IntervaledTickAttribute), true);
+
+            IEnumerator intervaledTick = IntervaledUpdate(tickable, (attrs[0] as IntervaledTickAttribute).interval);
+
+            _intervalledTicked[tickable] = intervaledTick;
+
+            StartCoroutine(intervaledTick);
+        }
+
+        internal void RemoveIntervaled(IIntervaledTickable tickable)
+        {
+            IEnumerator enumerator;
+
+            if (_intervalledTicked.TryGetValue(tickable, out enumerator))
+            {
+                StopCoroutine(enumerator);
+                _intervalledTicked.Remove(tickable);
+            }
+        }
+
+        void Update()
 		{
-			foreach (ITickable tickable in _ticked)
-				tickable.Tick(Time.deltaTime);
+            for (int i = _ticked.Count - 1; i >= 0; --i)
+				_ticked[i].Tick(Time.deltaTime);
 		}
 		void LateUpdate()
 		{
-			foreach (ILateTickable tickable in _lateTicked)
-				tickable.LateTick(Time.deltaTime);
+			for (int i = _lateTicked.Count - 1; i >= 0; --i)
+				_lateTicked[i].LateTick(Time.deltaTime);
 		}
 		void FixedUpdate()
 		{
-			foreach (IPhysicallyTickable tickable in _physicallyticked)
-				tickable.PhysicsTick(Time.fixedDeltaTime);
+			for (int i = _physicallyTicked.Count - 1; i >= 0; --i)
+				_physicallyTicked[i].PhysicsTick(Time.deltaTime);
 		}
+        IEnumerator IntervaledUpdate(IIntervaledTickable tickable, float seconds)
+        {
+            while (true) { DateTime next = DateTime.UtcNow.AddSeconds(seconds); while (DateTime.UtcNow < next) yield return null; tickable.IntervaledTick(); }
+        }
 
-		private List<ITickable> _ticked = new List<ITickable>();
+        private List<ITickable> _ticked = new List<ITickable>();
 		private List<ILateTickable> _lateTicked = new List<ILateTickable>();
-		private List<IPhysicallyTickable> _physicallyticked = new List<IPhysicallyTickable>();
+		private List<IPhysicallyTickable> _physicallyTicked = new List<IPhysicallyTickable>();
+        private Dictionary<IIntervaledTickable, IEnumerator> _intervalledTicked = new Dictionary<IIntervaledTickable, IEnumerator>();
 	}
 }

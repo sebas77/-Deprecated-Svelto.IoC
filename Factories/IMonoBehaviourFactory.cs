@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Svelto.IoC
+namespace Svelto.Factories
 {
 	public interface IMonoBehaviourFactory
 	{

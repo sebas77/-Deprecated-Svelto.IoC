@@ -16,36 +16,36 @@ namespace Svelto.Ticker
 			}
 		}
 		
-		public void Add(ITickable tickable)
+		public void Add(ITickableBase tickable)
 		{
-			_ticker.Add(tickable);
-		}
-		
-		public void Remove(ITickable tickable)
-		{
-			_ticker.Remove(tickable);
-        }
+            if (tickable is ITickable)
+			    _ticker.Add(tickable as ITickable);
 
-        public void AddPhysical(IPhysicallyTickable tickable)
-        {
-            _ticker.AddPhysical(tickable);
-        }
+            if (tickable is IPhysicallyTickable)
+                _ticker.AddPhysic(tickable as IPhysicallyTickable);
 
-        public void RemovePhysical(IPhysicallyTickable tickable)
-        {
-            _ticker.RemovePhysical(tickable);
-        }
+            if (tickable is ILateTickable)
+                _ticker.AddLate(tickable as ILateTickable);
 
-        public void AddLate(ILateTickable tickable)
-        {
-            _ticker.AddLate(tickable);
-        }
-
-        public void RemoveLate(ILateTickable tickable)
-        {
-            _ticker.RemoveLate(tickable);
+            if (tickable is IIntervaledTickable)
+                _ticker.AddIntervaled(tickable as IIntervaledTickable);
         }
 		
+		public void Remove(ITickableBase tickable)
+		{
+            if (tickable is ITickable)
+                _ticker.Remove(tickable as ITickable);
+
+            if (tickable is IPhysicallyTickable)
+                _ticker.RemovePhysic(tickable as IPhysicallyTickable);
+
+            if (tickable is ILateTickable)
+                _ticker.RemoveLate(tickable as ILateTickable);
+
+            if (tickable is IIntervaledTickable)
+                _ticker.RemoveIntervaled(tickable as IIntervaledTickable);
+        }
+
 		private TickBehaviour 	_ticker;
 	}
 }

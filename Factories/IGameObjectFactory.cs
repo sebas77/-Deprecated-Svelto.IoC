@@ -1,10 +1,10 @@
 using UnityEngine;
 
-namespace Svelto.IoC
+namespace Svelto.Factories
 {
     public interface IGameObjectFactory
     {
-        void AddPrefab(GameObject prefab, string type, GameObject parent);
+        void RegisterPrefab(GameObject prefab, string type, GameObject parent = null);
 
         GameObject Build(string type);
         GameObject Build(GameObject go);
