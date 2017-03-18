@@ -2,7 +2,7 @@ using System;
 
 namespace Svelto.IoC
 {
-	internal interface IInitialize
+    interface IInitialize
 	{
 		void OnDependenciesInjected();
 	}

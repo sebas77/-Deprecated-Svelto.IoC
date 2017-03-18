@@ -1,13 +1,13 @@
-﻿using System;
+using System;
+using System.Reflection;
 
 namespace Svelto.IoC
 {
     public interface IProvider
     {
-        object Create(Type containerContract);
+        bool Create(Type containerContract, PropertyInfo info, out object instance);
 
         Type contract { get; }
-        bool single { get; }
     }
 
     public interface IProvider<T> : IProvider

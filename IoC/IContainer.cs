@@ -1,5 +1,3 @@
-using System;
-
 namespace Svelto.IoC
 {
 	public interface IContainer

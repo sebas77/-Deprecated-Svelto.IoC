@@ -1,22 +1,34 @@
 using System;
+using System.Reflection;
 
 namespace Svelto.IoC
 {
-    public class SelfProvider<T> : IProvider<T>
+    class SelfProvider<T> : IProvider<T>
     {
         public SelfProvider(T instance)
         {
             _instance = instance;
+            _type = typeof(T);
         }
 
-        public object Create(Type containerContract)
+        public bool Create(Type containerContract, PropertyInfo info, out object instance)
         {
-            return _instance;
+            instance = _instance;
+
+            if (_mustBeInjected == true)
+            {
+                _mustBeInjected = false;
+
+                return true;
+            }
+
+            return false;
         }
 
-        public Type contract { get { return typeof(T); } }
-        public bool single { get { return true; } }
+        public Type contract { get { return _type; } }
 
-        T _instance; //should it be weak reference?
+        T       _instance;
+        bool    _mustBeInjected = true;
+        Type    _type;
     }
 }

@@ -8,9 +8,9 @@ using Svelto.Context;
 namespace Svelto.IoC.Extensions.Context
 {
     public class ContextContainer: Container
-	{
-		public ContextContainer(IContextNotifer contextNotifier)
-		{
+    {
+        public ContextContainer(IContextNotifer contextNotifier)
+        {
             _contextNotifier = contextNotifier;
         }
 

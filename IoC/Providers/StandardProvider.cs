@@ -1,15 +1,32 @@
 using System;
+using System.Reflection;
 
 namespace Svelto.IoC
 {
-    public class StandardProvider<T> : IProvider<T> where T : new()
+    class StandardProvider<T> : IProvider<T> where T : new()
     {
-        public object Create(Type containerContract)
+        public StandardProvider()
         {
-            return new T();
+            _type = typeof(T);
+        }
+        public bool Create(Type containerContract, PropertyInfo info, out object instance)
+        {
+            bool mustInject = false; 
+
+            if (_object == null)
+            {
+                _object = new T();
+                mustInject = true;
+            }
+
+            instance = _object;
+
+            return mustInject;
         }
 
-        public Type contract { get { return typeof(T); } }
-        public bool single { get { return true; } }
+        public Type contract { get { return _type; } }
+
+        T _object;
+        Type _type;
     }
 }
