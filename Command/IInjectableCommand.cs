@@ -1,15 +1,14 @@
 namespace Svelto.Command
 {
-    public interface IInjectableCommand : ICommand
+    // Does not work with EventDispatcher - must use the non-generic IInjectableCommand instead
+    public interface IInjectableCommand<T> : ICommand
     {
-        ICommand Inject(object dependency);
+        ICommand Inject(T dependency);
     }
 
-    public interface IInjectableCommand<T> : IInjectableCommand
-    {}
-
-    public interface IMultiInjectableCommand : ICommand
-	{
-	    ICommand Inject(params object[] dependencies);
-	}
+    // Does not work with EventDispatcher - must use the non-generic IInjectableCommand instead
+    public interface IInjectableCommandWithStruct<T> : ICommand where T:struct 
+    {
+        ICommand Inject(ref T dependency);
+    }
 }

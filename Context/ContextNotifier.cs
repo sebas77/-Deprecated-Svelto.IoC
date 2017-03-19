@@ -1,29 +1,32 @@
 using System;
 using System.Collections.Generic;
+using WeakReferenceI = Svelto.DataStructures.WeakReference<Svelto.Context.IWaitForFrameworkInitialization>;
+using WeakReferenceD = Svelto.DataStructures.WeakReference<Svelto.Context.IWaitForFrameworkDestruction>;
 
 namespace Svelto.Context
 {
-    class ContextNotifier: IContextNotifer
+    class ContextNotifier : IContextNotifer
     {
         public ContextNotifier()
         {
-            _toInitialize = new List<WeakReference<IWaitForFrameworkInitialization>>();
-            _toDeinitialize = new List<WeakReference<IWaitForFrameworkDestruction>> ();
+            _toInitialize = new List<WeakReferenceI>();
+            _toDeinitialize = new List<WeakReferenceD>();
         }
 
-        /// <summary>
-        /// A Context is meant to be initialized only once in its timelife
-        /// </summary>
-        public void NotifyFrameworkInitialized()
+        public void AddFrameworkDestructionListener(IWaitForFrameworkDestruction obj)
         {
-            for (int i = _toInitialize.Count - 1; i >= 0; --i)
-            {
-                var obj = _toInitialize[i];
-                if (obj.IsAlive == true)
-                    (obj.Target as IWaitForFrameworkInitialization).OnFrameworkInitialized();
-            }
+            if (_toDeinitialize != null)
+                _toDeinitialize.Add(new WeakReferenceD(obj));
+            else
+                throw new Exception("An object is expected to be initialized after the framework has been deinitialized. Type: " + obj.GetType());
+        }
 
-            _toInitialize = null;
+        public void AddFrameworkInitializationListener(IWaitForFrameworkInitialization obj)
+        {
+            if (_toInitialize != null)
+                _toInitialize.Add(new WeakReferenceI(obj));
+            else
+                throw new Exception("An object is expected to be initialized after the framework has been initialized. Type: " + obj.GetType());
         }
 
         /// <summary>
@@ -31,33 +34,42 @@ namespace Svelto.Context
         /// </summary>
         public void NotifyFrameworkDeinitialized()
         {
-            for (int i = _toDeinitialize.Count - 1; i >= 0; --i)
-            {
-                var obj = _toDeinitialize[i];
-                if (obj.IsAlive == true)
-                    (obj.Target as IWaitForFrameworkDestruction).OnFrameworkDestroyed();
-            }
+            for (var i = _toDeinitialize.Count - 1; i >= 0; --i)
+                try
+                {
+                    var obj = _toDeinitialize[i];
+                    if (obj.IsAlive)
+                        obj.Target.OnFrameworkDestroyed();
+                }
+                catch (Exception e)
+                {
+                    Utility.Console.LogException(e);
+                }
 
             _toDeinitialize = null;
         }
 
-        public void AddFrameworkInitializationListener(IWaitForFrameworkInitialization obj)
+        /// <summary>
+        /// A Context is meant to be initialized only once in its timelife
+        /// </summary>
+        public void NotifyFrameworkInitialized()
         {
-            if (_toInitialize != null)
-                _toInitialize.Add(new WeakReference<IWaitForFrameworkInitialization>(obj));
-            else
-                throw new Exception("An object is expected to be initialized after the framework has been initialized. Type: " + obj.GetType());
+            for (var i = _toInitialize.Count - 1; i >= 0; --i)
+                try
+                {
+                    var obj = _toInitialize[i];
+                    if (obj.IsAlive)
+                        obj.Target.OnFrameworkInitialized();
+                }
+                catch (Exception e)
+                {
+                    Utility.Console.LogException(e);
+                }
+
+            _toInitialize = null;
         }
 
-        public void AddFrameworkDestructionListener(IWaitForFrameworkDestruction obj)
-        {
-            if (_toDeinitialize != null)
-                _toDeinitialize.Add(new WeakReference<IWaitForFrameworkDestruction>(obj));
-            else
-                throw new Exception("An object is expected to be initialized after the framework has been deinitialized. Type: " + obj.GetType());
-        }
-
-        List<WeakReference<IWaitForFrameworkInitialization>> _toInitialize;
-        List<WeakReference<IWaitForFrameworkDestruction>> _toDeinitialize;
+        List<WeakReferenceD> _toDeinitialize;
+        List<WeakReferenceI> _toInitialize;
     }
 }
