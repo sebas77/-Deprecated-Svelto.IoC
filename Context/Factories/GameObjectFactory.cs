@@ -42,7 +42,7 @@ namespace Svelto.Context
         /// Register a prefab to be built later using a string ID.
         /// </summary>
         /// <param name="prefab">original prefab</param>
-        virtual public GameObject Build(GameObject prefab)
+        public GameObject Build(GameObject prefab)
         {
             var copy = Object.Instantiate(prefab) as GameObject;
 
@@ -58,6 +58,6 @@ namespace Svelto.Context
             _prefabs.Add(prefabName, objects);
         }
 
-        Dictionary<string, GameObject[]>  _prefabs;
+        Dictionary<string, GameObject[]>                        _prefabs;
     }
 }

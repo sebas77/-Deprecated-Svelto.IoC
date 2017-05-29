@@ -10,7 +10,11 @@ namespace Svelto.Context
 {
     public class MonoBehaviourFactory : Factories.IMonoBehaviourFactory
     {
-        virtual public M Build<M>(Func<M> constructor) where M : MonoBehaviour
+        public MonoBehaviourFactory()
+        {
+        }
+
+        public M Build<M>(Func<M> constructor) where M : MonoBehaviour
         {
             var mb = constructor();
 

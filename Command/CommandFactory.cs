@@ -22,6 +22,15 @@ namespace Svelto.Command
 
         }
 
+        public TCommand Build<TCommand, T>(T dependency) where TCommand : ICommand, new()
+        {
+            TCommand command = (TCommand) Activator.CreateInstance(typeof(TCommand), dependency);
+
+            OnNewCommand(command);
+
+            return command;
+        }
+
         void OnNewCommand(ICommand command)
         {
             if (_onNewCommand != null)
