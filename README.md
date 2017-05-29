@@ -5,7 +5,7 @@ Svelto IoC Container is the evolution of my first IoC container that I created a
 
 Please read my blog post for more information: http://www.sebaslab.com/svelto-inversion-of-control-container/
 
-The ad hoc example can be found here: https://github.com/sebas77/Svelto-IoC-Example
+The ad hoc example can be found here: https://github.com/sebas77/Svelto.Ioc.Example
 
 License
 =====================================
