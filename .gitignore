@@ -1,3 +1,4 @@
 /IoC/Extensions/*.meta
 /IoC/Extensions/Factories/*.meta
 *.meta
+/IoC/ideas.txt
