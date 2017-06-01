@@ -158,31 +158,37 @@ namespace Svelto.IoC
 
         void InjectProperty(object instanceToFullfill, PropertyInfo info, Type contract)
         {
-            if (info.PropertyType == typeof(IContainer)) //self inject
-                throw new Exception("Inject containers automatically is considered a design error");
-            
-             object referenceToInject;
+            if (info.PropertyType == typeof (IContainer)) //self inject
+            {
+                Utility.Console.LogWarning("Inject containers automatically is considered a design error");
 
-             if (info.PropertyType.IsGenericType == true &&
-                 info.PropertyType.GetGenericTypeDefinition() == _weakReferenceType)
-             {
-                 referenceToInject = InternalGet(info.PropertyType.GetGenericArguments()[0], contract, info);
+                info.SetValue(instanceToFullfill, this, null);
+            }
+            else
+            {
+                object referenceToInject;
 
-                 if (referenceToInject != null)
-                 {
-                     object o = Activator.CreateInstance(info.PropertyType, referenceToInject);
-                     
-                     info.SetValue(instanceToFullfill, o, null);
-                 }
-             }
-             else
-             {
-                 referenceToInject = InternalGet(info.PropertyType, contract, info);
+                if (info.PropertyType.IsGenericType == true &&
+                    info.PropertyType.GetGenericTypeDefinition() == _weakReferenceType)
+                {
+                    referenceToInject = InternalGet(info.PropertyType.GetGenericArguments()[0], contract, info);
 
-                 //inject in Injectable the valueObj
-                 if (referenceToInject != null)
-                     info.SetValue(instanceToFullfill, referenceToInject, null);
-             }
+                    if (referenceToInject != null)
+                    {
+                        object o = Activator.CreateInstance(info.PropertyType, referenceToInject);
+
+                        info.SetValue(instanceToFullfill, o, null);
+                    }
+                }
+                else
+                {
+                    referenceToInject = InternalGet(info.PropertyType, contract, info);
+
+                    //inject in Injectable the valueObj
+                    if (referenceToInject != null)
+                        info.SetValue(instanceToFullfill, referenceToInject, null);
+                }
+            }
         }
 
         //
